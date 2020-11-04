@@ -1,4 +1,4 @@
-package com.example.logqualy.ui.ui;
+package com.example.logqualy.ui;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;

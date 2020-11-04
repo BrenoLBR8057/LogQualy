@@ -9,9 +9,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LogQualy">
-        <activity android:name=".ui.ui.ProductList"></activity>
-        <activity android:name=".ui.ui.CreateNewUser" />
-        <activity android:name=".ui.ui.MainActivity">
+        <activity android:name=".ui.recyclerview.Recycler"></activity>
+        <activity android:name=".ui.CreateAndEdit" />
+        <activity android:name=".ui.ProductList" />
+        <activity android:name=".ui.CreateNewUser" />
+        <activity android:name=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
