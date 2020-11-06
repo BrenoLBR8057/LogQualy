@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.logqualy">
 
     <application
@@ -9,7 +10,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.LogQualy">
-        <activity android:name=".ui.recyclerview.Recycler"></activity>
         <activity android:name=".ui.CreateAndEdit" />
         <activity android:name=".ui.ProductList" />
         <activity android:name=".ui.CreateNewUser" />

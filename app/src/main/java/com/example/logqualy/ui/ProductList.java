@@ -1,46 +1,91 @@
 package com.example.logqualy.ui;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.example.logqualy.R;
+import com.example.logqualy.model.Products;
+import com.example.logqualy.ui.recyclerview.ProductAdapter;
+import com.example.logqualy.ui.recyclerview.ProductOnItemClick;
+import com.google.android.gms.common.api.Api;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.example.logqualy.ui.Constants.KEY_EDIT_PRODUCT;
 import static com.example.logqualy.ui.Constants.KEY_NEW_PRODUCT;
+import static com.example.logqualy.ui.Constants.REQUEST_CODE_EDIT_PRODUCT;
 import static com.example.logqualy.ui.Constants.REQUEST_CODE_NEW_PRODUCT;
-import static com.example.logqualy.ui.Constants.RETURN_CODE_NEW_PRODUCT;
+import static com.example.logqualy.ui.Constants.RETURN_CODE_EDIT_PRODUCT;
 
 public class ProductList extends AppCompatActivity {
     private RecyclerView recyclerView;
     private FloatingActionButton fabProduct;
+    private String PRODUCTS_COLLECTION = "COLLECTION";
     private FirebaseAuth mAuth;
+    private ProductAdapter adapter;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private String TAG = "Succes";
+    private List<Products> productsList;
+    private int positionItemClick;
+    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_list);
-
-        //FirebaseAuth.getInstance().signOut();
+        loadFields();
+        productsList = new ArrayList<>();
 
         if(FirebaseAuth.getInstance().getCurrentUser() == null){
             Intent intent = new Intent(getApplicationContext(), MainActivity.class);
             startActivity(intent);
-
-            losdFields();
-            onClick();
         }
+        loadData();
+        configureRecycler();
+        onClickBtnAdd();
     }
 
-    private void onClick() {
+    private void configureRecycler() {
+        recyclerView = findViewById(R.id.recyclerProducts);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        adapter = new ProductAdapter(productsList, getApplicationContext());
+        recyclerView.setAdapter(adapter);
+        adapter.setOnItemClickListener(new ProductOnItemClick() {
+            @Override
+            public void itemClick(Products products, int position) {
+                positionItemClick = position;
+                Intent intent = new Intent(ProductList.this, CreateAndEdit.class);
+                intent.putExtra(KEY_EDIT_PRODUCT, products);
+                startActivityForResult(intent, REQUEST_CODE_EDIT_PRODUCT);
+            }
+        });
+    }
+
+
+    public void onClickBtnAdd() {
         fabProduct.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,12 +98,21 @@ public class ProductList extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(requestCode == REQUEST_CODE_NEW_PRODUCT && resultCode == RETURN_CODE_NEW_PRODUCT && data.hasExtra(KEY_NEW_PRODUCT)){
+        intent = data;
+        if(requestCode == REQUEST_CODE_NEW_PRODUCT && resultCode == RESULT_OK && data.hasExtra(KEY_NEW_PRODUCT)){
+            Products products = (Products) data.getSerializableExtra(KEY_NEW_PRODUCT);
+            loadData();
+            configureRecycler();
+            adapter.notifyDataSetChanged();
+        }else if(requestCode == REQUEST_CODE_EDIT_PRODUCT && resultCode == RETURN_CODE_EDIT_PRODUCT && data.hasExtra(KEY_EDIT_PRODUCT)){
+            Products products = (Products)data.getSerializableExtra(KEY_EDIT_PRODUCT);
 
+            productsList.set(positionItemClick, products);
+            adapter.notifyItemChanged(positionItemClick);
         }
     }
 
-    private void losdFields() {
+    private void loadFields() {
         recyclerView = findViewById(R.id.recyclerProducts);
         fabProduct = findViewById(R.id.fabAddProduct);
     }
@@ -82,5 +136,25 @@ public class ProductList extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    void loadData(){
+        db.collection(PRODUCTS_COLLECTION).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                if(task.isSuccessful()){
+                    productsList.clear();
+                    for(QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                        Products products = documentSnapshot.toObject(Products.class);
+                        products.setId(documentSnapshot.getId());
+                        productsList.add(products);
+                        configureRecycler();
+                    }
+                }else{
+                    Log.d(TAG, "Erro ao pegar documentos", task.getException());
+                }
+            }
+        });
+
     }
 }

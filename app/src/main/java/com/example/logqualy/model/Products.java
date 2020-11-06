@@ -3,18 +3,20 @@ package com.example.logqualy.model;
 import java.io.Serializable;
 
 public class Products implements Serializable {
+    private String id;
     private String title;
     private String description;
     private String date;
-    private int id;
 
-    Products(String title, String description, String date){
+    public Products(String title, String description, String date){
         this.date = date;
         this.description = description;
         this.title = title;
     }
 
-    public int getId() {
+    public Products(){}
+
+    public String getId() {
         return id;
     }
 
@@ -42,7 +44,7 @@ public class Products implements Serializable {
         this.title = title;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 }
