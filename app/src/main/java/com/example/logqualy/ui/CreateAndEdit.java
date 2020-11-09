@@ -14,12 +14,18 @@ import android.widget.ImageView;
 
 import com.example.logqualy.R;
 import com.example.logqualy.model.Products;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.example.logqualy.ui.Constants.KEY_EDIT_PRODUCT;
@@ -36,6 +42,7 @@ public class CreateAndEdit extends AppCompatActivity {
     private Products products;
     private String TAG = "Succes";
     private String PRODUCTS_COLLECTION = "COLLECTION";
+    private List<Products> productsList = new ArrayList<>();
 
 
     @Override
@@ -48,6 +55,9 @@ public class CreateAndEdit extends AppCompatActivity {
         if(intent.hasExtra(KEY_EDIT_PRODUCT)){
             isEditForm = true;
             products = (Products) intent.getSerializableExtra(KEY_EDIT_PRODUCT);
+            title.setText(products.getTitle());
+            description.setText(products.getDescription());
+            date.setText(products.getDate());
         }
 
         buttonClick();
@@ -80,9 +90,9 @@ public class CreateAndEdit extends AppCompatActivity {
         String description = this.description.getText().toString();
         String date = this.date.getText().toString();
 
-        products.setDate(date);
-        products.setDescription(description);
         products.setTitle(title);
+        products.setDescription(description);
+        products.setDate(date);
     }
 
     private void loadFields() {

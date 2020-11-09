@@ -3,6 +3,7 @@ package com.example.logqualy.ui;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,14 +19,11 @@ import com.example.logqualy.R;
 import com.example.logqualy.model.Products;
 import com.example.logqualy.ui.recyclerview.ProductAdapter;
 import com.example.logqualy.ui.recyclerview.ProductOnItemClick;
-import com.google.android.gms.common.api.Api;
+import com.example.logqualy.ui.recyclerview.helper.ProductTouthHelper;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -37,7 +35,6 @@ import static com.example.logqualy.ui.Constants.KEY_EDIT_PRODUCT;
 import static com.example.logqualy.ui.Constants.KEY_NEW_PRODUCT;
 import static com.example.logqualy.ui.Constants.REQUEST_CODE_EDIT_PRODUCT;
 import static com.example.logqualy.ui.Constants.REQUEST_CODE_NEW_PRODUCT;
-import static com.example.logqualy.ui.Constants.RETURN_CODE_EDIT_PRODUCT;
 
 public class ProductList extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -49,7 +46,6 @@ public class ProductList extends AppCompatActivity {
     private String TAG = "Succes";
     private List<Products> productsList;
     private int positionItemClick;
-    private Intent intent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +78,9 @@ public class ProductList extends AppCompatActivity {
                 startActivityForResult(intent, REQUEST_CODE_EDIT_PRODUCT);
             }
         });
+
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ProductTouthHelper(adapter));
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
 
@@ -98,17 +97,15 @@ public class ProductList extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        intent = data;
         if(requestCode == REQUEST_CODE_NEW_PRODUCT && resultCode == RESULT_OK && data.hasExtra(KEY_NEW_PRODUCT)){
             Products products = (Products) data.getSerializableExtra(KEY_NEW_PRODUCT);
+            db.collection(PRODUCTS_COLLECTION).add(products);
             loadData();
-            configureRecycler();
-            adapter.notifyDataSetChanged();
-        }else if(requestCode == REQUEST_CODE_EDIT_PRODUCT && resultCode == RETURN_CODE_EDIT_PRODUCT && data.hasExtra(KEY_EDIT_PRODUCT)){
+        }else if(requestCode == REQUEST_CODE_EDIT_PRODUCT && resultCode == RESULT_OK && data.hasExtra(KEY_EDIT_PRODUCT)){
             Products products = (Products)data.getSerializableExtra(KEY_EDIT_PRODUCT);
-
             productsList.set(positionItemClick, products);
-            adapter.notifyItemChanged(positionItemClick);
+            db.collection(PRODUCTS_COLLECTION).document(products.getId()).set(products);
+            loadData();
         }
     }
 
@@ -140,20 +137,20 @@ public class ProductList extends AppCompatActivity {
 
     void loadData(){
         db.collection(PRODUCTS_COLLECTION).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if(task.isSuccessful()){
-                    productsList.clear();
-                    for(QueryDocumentSnapshot documentSnapshot : task.getResult()) {
-                        Products products = documentSnapshot.toObject(Products.class);
-                        products.setId(documentSnapshot.getId());
-                        productsList.add(products);
-                        configureRecycler();
+                @Override
+                public void onComplete (@NonNull Task < QuerySnapshot > task) {
+                    if (task.isSuccessful()) {
+                        productsList.clear();
+                        for (QueryDocumentSnapshot documentSnapshot : task.getResult()) {
+                            Products products = documentSnapshot.toObject(Products.class);
+                            products.setId(documentSnapshot.getId());
+                            productsList.add(products);
+                            configureRecycler();
+                        }
+                    } else {
+                        Log.d(TAG, "Erro ao pegar documentos", task.getException());
                     }
-                }else{
-                    Log.d(TAG, "Erro ao pegar documentos", task.getException());
                 }
-            }
         });
 
     }

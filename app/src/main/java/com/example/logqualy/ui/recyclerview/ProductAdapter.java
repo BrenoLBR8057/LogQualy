@@ -1,9 +1,12 @@
 package com.example.logqualy.ui.recyclerview;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,10 +15,21 @@ import android.widget.TextView;
 
 import com.example.logqualy.R;
 import com.example.logqualy.model.Products;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Source;
 
+import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
+import static android.content.ContentValues.TAG;
+
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private List<Products> productsList;
     private Context context;
     private ProductOnItemClick onItemClickListener;
@@ -46,6 +60,17 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     @Override
     public int getItemCount() {
         return productsList.size();
+    }
+
+    public void removeItemCarro(int position) {
+        Products products = productsList.get(position);
+        db.collection("COLLECTION").document(products.getId()).delete();
+        notifyItemRemoved(position);
+    }
+
+    public void changeLocate(int posicaoInicial, int posicaoFinal) {
+        Collections.swap(productsList, posicaoInicial, posicaoFinal);
+        notifyItemMoved(posicaoInicial, posicaoFinal);
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder{
